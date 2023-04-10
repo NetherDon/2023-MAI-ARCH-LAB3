@@ -1,11 +1,12 @@
 version: '2.1'
 
 services:
-  project-database:
+  # ---- DataBase Services ----
+  project-db-node-1:
     build:
       context: mariadb
       dockerfile: Dockerfile
-    container_name: DataBase
+    container_name: DataBase-1
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: archdb
@@ -20,21 +21,64 @@ services:
       - arch-network
     ports:
       - 3360:3306
+    volumes:
+      - database-data-1:/var/lib/mysql
+
+  project-db-node-2:
+    build:
+      context: mariadb
+      dockerfile: Dockerfile
+    container_name: DataBase-2
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: archdb
+      MYSQL_USER: stud
+      MYSQL_PASSWORD: stud
+      MYSQL_ROOT_PASSWORD: '1'
+    command: >
+      --sql-mode='STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION'
+      --general-log=ON
+      --log-queries-not-using-indexes=ON
+    networks:
+      - arch-network
+    ports:
+      - 3361:3306
+    volumes:
+      - database-data-2:/var/lib/mysql
+
+  proxysql:
+    build:
+      context: mariadb/proxysql
+      dockerfile: Dockerfile
+    container_name: ProxySQL
+    command: >
+      --initial
+    volumes:
+      - proxysql-data:/var/lib/proxysql
     healthcheck:
       test: "/usr/bin/mysql --user=stud --password=stud --execute \"SHOW DATABASES;\""
       timeout: 20s
       retries: 5
-    volumes:
-      - database-data:/var/lib/mysql
+    depends_on:
+      - project-db-node-1
+      - project-db-node-2
+    networks:
+      - arch-network
+    ports:
+      # Mysql Client Port
+      - "6033:6033"
+      # Mysql Admin Port
+      - "6032:6032"
 
+  # ---- Main Services ----
   account:
     build:
       context: ./
       dockerfile: account/Dockerfile
     container_name: Account
     environment:
-      - DB_HOST=DataBase
-      - DB_PORT=3306
+      - DB_HOST=proxysql
+      - DB_PORT=6033
       - DB_LOGIN=stud
       - DB_PASSWORD=stud
       - DB_DATABASE=archdb
@@ -43,8 +87,9 @@ services:
     networks:
       - arch-network
     depends_on:
-      project-database:
-        condition: service_healthy
+      - proxysql
+      - project-db-node-1
+      - project-db-node-2
 
   catalog:
     build:
@@ -52,8 +97,8 @@ services:
       dockerfile: catalog/Dockerfile
     container_name: Catalog
     environment:
-      - DB_HOST=DataBase
-      - DB_PORT=3306
+      - DB_HOST=proxysql
+      - DB_PORT=6033
       - DB_LOGIN=stud
       - DB_PASSWORD=stud
       - DB_DATABASE=archdb
@@ -62,8 +107,9 @@ services:
     networks:
       - arch-network
     depends_on:
-      project-database:
-        condition: service_healthy
+      - proxysql
+      - project-db-node-1
+      - project-db-node-2
 
   cart:
     build:
@@ -72,8 +118,8 @@ services:
     container_name: Cart
     environment:
       - SERVICE_HOST=account
-      - DB_HOST=DataBase
-      - DB_PORT=3306
+      - DB_HOST=proxysql
+      - DB_PORT=6033
       - DB_LOGIN=stud
       - DB_PASSWORD=stud
       - DB_DATABASE=archdb
@@ -82,15 +128,16 @@ services:
     networks:
       - arch-network
     depends_on:
-      project-database:
-        condition: service_healthy
-      account:
-        condition: service_started
-      catalog:
-        condition: service_started
+      - proxysql
+      - project-db-node-1
+      - project-db-node-2
+      - account
+      - catalog
 
 volumes:
-  database-data:
+  database-data-1:
+  database-data-2:
+  proxysql-data:
 
 networks:
   arch-network:

@@ -27,10 +27,10 @@ namespace database
             Statement create_stmt(session);
             create_stmt << "CREATE TABLE IF NOT EXISTS `Cart` (`id` INT NOT NULL AUTO_INCREMENT,"
                         << "`productId` INT NOT NULL,"
-                        << "`userId` INT NOT NULL,"
+                        << "`userLogin` VARCHAR(256) NOT NULL,"
                         << "PRIMARY KEY (`id`),"
                         << "FOREIGN KEY (`productId`) REFERENCES Product (`id`),"
-                        << "FOREIGN KEY (`userId`) REFERENCES User (`id`));",
+                        << "KEY `ul` (`userLogin`));",
                 now;
         }
         catch (Poco::Data::MySQL::ConnectionException &e)
@@ -46,7 +46,7 @@ namespace database
         }
     }
 
-    std::vector<Product> Cart::readAllFor(const long &id)
+    std::vector<Product> Cart::readAllFor(const std::string &login)
     {
         try
         {
@@ -55,7 +55,7 @@ namespace database
             std::vector<Product> result;
             Product a;
 
-            std::string sql = "SELECT id, name, type, description, manufactorer, price FROM Product WHERE id IN (SELECT productId FROM Cart WHERE userId=" + std::to_string(id) + ")";
+            std::string sql = "SELECT id, name, type, description, manufactorer, price FROM Product WHERE id IN (SELECT productId FROM Cart WHERE userLogin=\"" + login + "\")";
             std::cout << "SQL Request: " << sql << std::endl;
             select << sql,
                 into(a.id()),
@@ -95,11 +95,11 @@ namespace database
             std::vector<Cart> result;
             Cart a;
 
-            std::string sql = "SELECT productId, userId FROM Cart";
+            std::string sql = "SELECT productId, userLogin FROM Cart";
             std::cout << "SQL Request: " << sql << std::endl;
             select << sql,
                 into(a._product_id),
-                into(a._user_id),
+                into(a._user_login),
                 range(0, 1);
 
             while (!select.done())
@@ -129,9 +129,9 @@ namespace database
             Poco::Data::Session session = database::Database::get().create_session();
             Poco::Data::Statement insert(session);
 
-            insert << "INSERT INTO Cart (productId, userId) VALUES(?, ?)",
+            insert << "INSERT INTO Cart (productId, userLogin) VALUES(?, ?)",
                 use(_product_id),
-                use(_user_id);
+                use(_user_login);
 
             insert.execute();
 
@@ -166,16 +166,16 @@ namespace database
         if (!exclude_id)
             root->set("id", _id);
         root->set("productId", _product_id);
-        root->set("userId", _user_id);
+        root->set("userLogin", _user_login);
 
         return root;
     }
 
     long Cart::getId() const { return _id; }
     const long &Cart::getProductId() const { return _product_id; }
-    const long &Cart::getUser() const { return _user_id; }
+    const std::string &Cart::getUser() const { return _user_login; }
 
     long& Cart::id() { return _id; }
     long &Cart::product() { return _product_id; }
-    long &Cart::user() { return _user_id; }
+    std::string &Cart::user() { return _user_login; }
 }

@@ -13,7 +13,7 @@ namespace database
         private:
             long _id;
             long _product_id;
-            long _user_id;
+            std::string _user_login;
 
         static std::vector<Cart> read_all(const std::string &where);
 
@@ -23,15 +23,15 @@ namespace database
 
             long getId() const;
             const long &getProductId() const;
-            const long &getUser() const;
+            const std::string &getUser() const;
 
             long& id();
             long &product();
-            long &user();
+            std::string &user();
 
             static void init();
             static std::vector<Cart> readAll();
-            static std::vector<Product> readAllFor(const long &id);
+            static std::vector<Product> readAllFor(const std::string &login);
             void saveToMySQL();
 
             Poco::JSON::Object::Ptr toJSON(bool exclude_id) const;

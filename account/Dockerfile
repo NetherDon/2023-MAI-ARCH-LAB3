@@ -5,7 +5,7 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata git sudo
 RUN git clone -b master https://github.com/pocoproject/poco.git && cd poco && mkdir cmake-build && cd cmake-build && cmake .. && make && sudo make install && cd .. && cd ..
 
 # -- Remote --
-RUN git clone https://github.com/NetherDon/2023-MAI-ARCH-LAB2.git services
+RUN git clone https://github.com/NetherDon/2023-MAI-ARCH-LAB3.git services
 RUN sudo ldconfig
 RUN cd services && mkdir build && cd build && cmake  .. && make
 ENTRYPOINT [ "services/build/account" ]

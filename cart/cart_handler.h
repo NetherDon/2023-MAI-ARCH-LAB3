@@ -61,11 +61,11 @@ private:
         return true;
     }
 
-    std::optional<std::string> getUserId(HTTPServerRequest &request)
+    std::optional<std::string> getUser(HTTPServerRequest &request, std::string &login)
     {
         std::string scheme;
         std::string info;
-        std::string login, password;
+        std::string password;
 
         bool authorized = false;
         std::cout << "Before get credentials" << std::endl;
@@ -95,9 +95,9 @@ private:
         return {};
     }
 
-    void handleGet(long userId, [[maybe_unused]] HTTPServerRequest &request, HTTPServerResponse &response)
+    void handleGet(std::string &login, [[maybe_unused]] HTTPServerRequest &request, HTTPServerResponse &response)
     {
-        auto results = database::Cart::readAllFor(userId);
+        auto results = database::Cart::readAllFor(login);
         Poco::JSON::Array arr;
         for (auto s : results)
             arr.add(s.toJSON(false));
@@ -110,10 +110,10 @@ private:
         return;
     }
 
-    void handlePut(long userId, HTMLForm &form, [[maybe_unused]] HTTPServerRequest &request, HTTPServerResponse &response)
+    void handlePut(std::string login, HTMLForm &form, [[maybe_unused]] HTTPServerRequest &request, HTTPServerResponse &response)
     {
         database::Cart cart;
-        cart.user() = userId;
+        cart.user() = login;
 
         bool flag = true;
         std::string err_mess;
@@ -161,7 +161,8 @@ public:
         std::cout << "Handle Request" << std::endl;
         HTMLForm form(request, request.stream());
 
-        std::optional<std::string> userIdStr = getUserId(request);
+        std::string login;
+        std::optional<std::string> userIdStr = getUser(request, login);
 
         if (!userIdStr.has_value())
         {
@@ -181,12 +182,14 @@ public:
 
         try
         {
+            /*
             Poco::JSON::Parser parser;
             Poco::Dynamic::Var result = parser.parse(userIdStr.value());
             Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
 
             long userId = object->getValue<long>("id");
-
+            */
+           
             std::string path = request.getURI();
             int i = path.find('?');
             if (i != -1)
@@ -198,14 +201,14 @@ public:
             {
                 if (path == "/cart")
                 {
-                    handleGet(userId, request, response);
+                    handleGet(login, request, response);
                 }
             }
             else if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST)
             {
                 if (path == "/cart/put" && form.has("product_id"))
                 {
-                    handlePut(userId, form, request, response);
+                    handlePut(login, form, request, response);
                 }
             }
         }
