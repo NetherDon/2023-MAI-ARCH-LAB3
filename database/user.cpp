@@ -129,7 +129,7 @@ namespace database
             User a;
 
             std::string hint = Database::sharding_hint(login);
-            select << "SELECT id, first_name, last_name, email, title,login,password FROM User where login=?; "
+            select << "SELECT id, first_name, last_name, email, title,login,password FROM User where login=? "
                    << hint,
                 into(a._id),
                 into(a._first_name),
@@ -206,7 +206,7 @@ namespace database
             for (auto &hint : database::Database::get_all_hints())
             {
                 Statement select(session);
-                select << "SELECT id, first_name, last_name, email, title, login, password FROM User;"
+                select << "SELECT id, first_name, last_name, email, title, login, password FROM User "
                        << hint,
                     into(a._id),
                     into(a._first_name),
