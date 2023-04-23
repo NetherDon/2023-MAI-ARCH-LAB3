@@ -38,13 +38,13 @@ CREATE TABLE IF NOT EXISTS `Cart`
 );
 
 INSERT INTO `User` (`first_name`, `last_name`, `email`, `title`, `login`, `password`) VALUE
-("Artem", "Chirkov", "my@mail.ru", "Mister", "log", "123"); -- sharding:0
+("Artem", "Chirkov", "my@mail.ru", "Mister", "log", "123"); -- sharding:1
 
 INSERT INTO `User` (`first_name`, `last_name`, `email`, `title`, `login`, `password`) VALUE
-("Ivan", "Konstantinov", "random@gmail.com", "Mister", "apple", "122333"); -- sharding:1
+("Ivan", "Konstantinov", "random@gmail.com", "Mister", "apple", "122333"); -- sharding:0
 
 INSERT INTO `User` (`first_name`, `last_name`, `email`, `title`, `login`, `password`) VALUE
-("Valery", "Popov", "valp@yandex.ru", "Mister", "test", "pass2"); -- sharding:0
+("Valery", "Popov", "valp@yandex.ru", "Mister", "test", "pass2"); -- sharding:1
 
 INSERT INTO `Product` (`name`, `type`, `manufactorer`, `description`, `price`) VALUES
 ("Apple", "Fruit", "Farm Frenzy", "", 10),
